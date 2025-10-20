@@ -29,23 +29,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.trainingproject.tasks.data.Task
+import com.trainingproject.tasks.data.TaskDao
+import com.trainingproject.tasks.data.TaskRepository
+import com.trainingproject.tasks.viewmodel.ClearAllTaskUseCase
 import com.trainingproject.tasks.viewmodel.SettingsViewModel
 import com.trainingproject.tasks.viewmodel.ThemeMode
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    SettingsScreen(
-        onBackClick = {},
-        vm = viewModel()
-    )
-}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onClearAllTasks: () -> Unit= {},
     onBackClick: () -> Unit,
-    vm: SettingsViewModel
+    vm: SettingsViewModel,
+    clearAllTaskUseCase: ClearAllTaskUseCase
 ) {
     val context = LocalContext.current
     val currentTheme = vm.themeMode
@@ -97,7 +95,7 @@ fun SettingsScreen(
 
             Button(
                 onClick = {
-                    onClearAllTasks()
+                    clearAllTaskUseCase.clearAll()
                     Toast.makeText(context, "All tasks deleted", Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -110,4 +108,26 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    class FakeTaskDao(private val tasks: List<Task>) : TaskDao {
+        override fun get(taskId: Long): Flow<Task> =
+            flowOf(tasks.filter { it.taskId == taskId }[0])
+
+        override fun getAll(): Flow<List<Task>> = flowOf(tasks)
+        override suspend fun clearAll() {}
+
+        override suspend fun insert(task: Task) {}
+        override suspend fun update(task: Task) {}
+        override suspend fun delete(task: Task) {}
+        override suspend fun insertAll(tasks: List<Task>) {}
+    }
+    SettingsScreen(
+        onBackClick = {},
+        vm = viewModel(),
+        clearAllTaskUseCase= ClearAllTaskUseCase(TaskRepository(FakeTaskDao(emptyList())))
+    )
 }

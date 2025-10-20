@@ -7,25 +7,28 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.trainingproject.tasks.data.TaskDatabase
+import com.trainingproject.tasks.data.TaskRepository
 import com.trainingproject.tasks.uiSreens.screens.mainScreen.MainScreen
 import com.trainingproject.tasks.uiSreens.screens.SettingsScreen
-import com.trainingproject.tasks.viewmodel.TaskViewModel
 import com.trainingproject.tasks.viewmodel.TaskViewModelFactory
 import com.trainingproject.tasks.uiSreens.screens.AddEditTaskScreen
+import com.trainingproject.tasks.viewmodel.AddEditTaskViewModelFactory
+import com.trainingproject.tasks.viewmodel.ClearAllTaskUseCase
 import com.trainingproject.tasks.viewmodel.SettingsViewModel
 
 @Composable
 fun AppTasksNavigation(settingsVM: SettingsViewModel) {
-    val vm: TaskViewModel = viewModel(
-        factory = TaskViewModelFactory(LocalContext.current)
-    )
+    val context = LocalContext.current
+    val dao = TaskDatabase.getInstance(context).taskDao()
+    val repo = TaskRepository.getInstance(dao)
 
     val navController = rememberNavController()
     NavHost (navController = navController,
@@ -46,32 +49,40 @@ fun AppTasksNavigation(settingsVM: SettingsViewModel) {
 
         composable("main") {
             MainScreen(
-                vm = vm,
+                vm = viewModel(
+                    factory = TaskViewModelFactory(repo)
+                ),
                 onAddTaskClick = { navController.navigate("add") { launchSingleTop = true } },
                 onSettingsClick = { navController.navigate("settings") { launchSingleTop = true } },
                 onTaskCardClick = { task -> navController.navigate("details/${task.taskId}") { launchSingleTop = true } }
             )
         }
         composable("add") {
-            AddEditTaskScreen(addOrUpdateTask = { task -> vm.addTask(task) },
-                onBackClick = { navController.popBackStack() })
+            AddEditTaskScreen(
+                onBackClick = { navController.popBackStack() },
+                vm = viewModel(
+                    factory = AddEditTaskViewModelFactory(repo, null)
+                )
+            )
         }
 
         composable("settings") {
-            SettingsScreen(onBackClick = { navController.popBackStack() }, onClearAllTasks = { vm.clearAll() }, vm = settingsVM )
+            SettingsScreen(
+                onBackClick = { navController.popBackStack() },
+                vm = settingsVM,
+                clearAllTaskUseCase = ClearAllTaskUseCase(repo)
+            )
         }
 
-        composable("details/{taskId}") { backStackEntry ->
+        composable("details/{taskId}",
+            ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getString("taskId")?.toLongOrNull()
-            taskId?.let {
-                AddEditTaskScreen(
-                    addOrUpdateTask = { task -> vm.updateTask(task) },
-                    onBackClick = { navController.popBackStack() },
-                    taskId = taskId,
-                    getTask = { taskId -> vm.getTask(taskId) }
-                ) } ?:  LaunchedEffect(Unit) {
-                navController.popBackStack()
-            }
+            AddEditTaskScreen(
+                onBackClick = { navController.popBackStack() },
+                vm = viewModel(
+                    factory = AddEditTaskViewModelFactory(repo, taskId)
+                )
+            )
         }
     }
 }

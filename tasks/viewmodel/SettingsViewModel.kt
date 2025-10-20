@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.core.content.edit
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 enum class ThemeMode(val displayName: String) {
     SYSTEM("System default"),
