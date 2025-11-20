@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.firebase.gservices)
 }
 
 android {
@@ -32,11 +33,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -45,7 +43,15 @@ android {
 
 dependencies {
     implementation (project(":domain"))
+    implementation (project(":data"))
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.retrofit2.kotlinx.serialization.converter)
+    implementation(libs.retrofit2.retrofit)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.navigation.runtime.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
