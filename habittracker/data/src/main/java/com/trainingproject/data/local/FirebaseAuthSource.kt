@@ -48,7 +48,7 @@ class FirebaseAuthSource @Inject constructor(
         }
     }
 
-    suspend fun logout() {
+    fun logout() {
         firebaseAuth.signOut()
     }
     private fun FirebaseUser.toDomain(): User {

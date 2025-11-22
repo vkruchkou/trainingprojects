@@ -1,6 +1,7 @@
 package com.trainingproject.data.local
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.trainingproject.habittrackerapp.domain.models.Habit
 import kotlinx.coroutines.channels.awaitClose
@@ -44,11 +45,8 @@ class FirebaseFirestoreSource @Inject constructor(
     }
 
     suspend fun addHabit(habit: Habit) {
-        if (habit.id.isEmpty()) {
-            habitsCollection.add(habit).await()
-        } else {
-            habitsCollection.document(habit.id).set(habit).await()
-        }
+        val id = habitsCollection.document().id
+        habitsCollection.document(id).set(habit.copy(id = id)).await()
     }
 
     suspend fun updateHabit(habit: Habit) {

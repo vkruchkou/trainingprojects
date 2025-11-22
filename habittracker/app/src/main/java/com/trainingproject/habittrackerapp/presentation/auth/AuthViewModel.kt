@@ -1,8 +1,5 @@
 package com.trainingproject.habittrackerapp.presentation.auth
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.trainingproject.habittrackerapp.domain.usecase.auth.GetCurrentUserUseCase
@@ -11,12 +8,20 @@ import com.trainingproject.habittrackerapp.domain.usecase.auth.RegisterUseCase
 import com.trainingproject.habittrackerapp.presentation.navigation.Screen
 import com.trainingproject.habittrackerapp.presentation.util.UiEvent
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class AuthUiState(
+    val email: String = "",
+    val password: String = "",
+    val isLoading: Boolean = false,
+    val isRegistering: Boolean = false,
+    val event: UiEvent? = null
+)
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase,
@@ -24,47 +29,45 @@ class AuthViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase
 ) : ViewModel() {
 
-    var email by mutableStateOf("")
-        private set
-    var password by mutableStateOf("")
-        private set
-    var isLoading by mutableStateOf(false)
-        private set
-    var isRegistering by mutableStateOf(false)
-        private set
 
-    private val _uiEvent = Channel<UiEvent>()
-    val uiEvent = _uiEvent.receiveAsFlow()
+    private val _uiState = MutableStateFlow(AuthUiState())
+    val uiState = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             val currentUser = getCurrentUserUseCase().first()
             if (currentUser != null) {
-                _uiEvent.send(UiEvent.Navigate(Screen.HomeScreen.route))
+                sendUiEvent (UiEvent.Navigate(Screen.HomeScreen.route))
             }
         }
     }
 
     fun onEmailChange(newEmail: String) {
-        email = newEmail
+        _uiState.update { it.copy(email = newEmail) }
     }
 
     fun onPasswordChange(newPassword: String) {
-        password = newPassword
+        _uiState.update { it.copy(password = newPassword) }
     }
 
     fun onLoginClick() {
-        if (email.isBlank() || password.isBlank()) {
+        val currentState = _uiState.value
+
+        if (currentState.email.isBlank() || currentState.password.isBlank()) {
             sendSnackbar("Email and password cannot be empty.")
             return
         }
-        isLoading = true
+
+        _uiState.update { it.copy(isLoading = true) }
+
         viewModelScope.launch {
-            val result = loginUseCase(email, password)
-            isLoading = false
+            val result = loginUseCase(currentState.email, currentState.password)
+
+            _uiState.update { it.copy(isLoading = false) }
+
             if (result.isSuccess) {
                 sendSnackbar("Login successful!")
-                _uiEvent.send(UiEvent.Navigate(Screen.HomeScreen.route))
+                sendUiEvent (UiEvent.Navigate(Screen.HomeScreen.route))
             } else {
                 sendSnackbar("Login failed: ${result.exceptionOrNull()?.localizedMessage}")
             }
@@ -72,28 +75,41 @@ class AuthViewModel @Inject constructor(
     }
 
     fun onRegisterClick() {
-        if (email.isBlank() || password.isBlank()) {
+        val currentState = _uiState.value
+
+        if (currentState.email.isBlank() || currentState.password.isBlank()) {
             sendSnackbar("Email and password cannot be empty.")
             return
         }
-        isLoading = true
-        isRegistering = true
+
+        _uiState.update { it.copy(isLoading = true, isRegistering = true) }
+
         viewModelScope.launch {
-            val result = registerUseCase(email, password)
-            isLoading = false
-            isRegistering = false
+            val result = registerUseCase(currentState.email, currentState.password)
+
+            _uiState.update { it.copy(isLoading = false, isRegistering = false) }
+
             if (result.isSuccess) {
                 sendSnackbar("Registration successful! You can now log in.")
-                _uiEvent.send(UiEvent.Navigate(Screen.HomeScreen.route))
+                sendUiEvent (UiEvent.Navigate(Screen.HomeScreen.route))
             } else {
                 sendSnackbar("Registration failed: ${result.exceptionOrNull()?.localizedMessage}")
             }
         }
     }
 
-    private fun sendSnackbar(message: String) {
-        viewModelScope.launch {
-            _uiEvent.send(UiEvent.ShowSnackbar(message))
+    private fun sendUiEvent(event: UiEvent) {
+        _uiState.update {
+            it.copy(
+                event = event
+            )
         }
+    }
+    private fun sendSnackbar(message: String) {
+        sendUiEvent(UiEvent.ShowSnackbar(message))
+    }
+
+    fun onEventConsumed() {
+        _uiState.value = _uiState.value.copy(event = null)
     }
 }

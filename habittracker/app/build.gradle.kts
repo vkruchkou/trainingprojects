@@ -44,6 +44,9 @@ android {
 dependencies {
     implementation (project(":domain"))
     implementation (project(":data"))
+    implementation(libs.androidx.material.icons.extended)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.retrofit2.kotlinx.serialization.converter)
     implementation(libs.retrofit2.retrofit)
@@ -51,7 +54,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.hilt.android)
-    implementation(libs.androidx.navigation.runtime.android)
+    implementation(libs.androidx.navigation.compose)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

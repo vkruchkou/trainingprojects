@@ -23,7 +23,7 @@ class AuthRepositoryImpl @Inject constructor(
         return Result.failure(UnsupportedOperationException("Google Sign-in not yet implemented"))
     }
 
-    override suspend fun logout() {
+    override fun logout() {
         firebaseAuthSource.logout()
     }
 
