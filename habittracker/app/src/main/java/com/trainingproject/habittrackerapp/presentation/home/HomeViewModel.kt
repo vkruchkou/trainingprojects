@@ -95,7 +95,6 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onLogoutClick() {
-        viewModelScope.launch { _currentUserId.emit(null) }
         logoutUseCase()
         sendSnackbar("Logged out successfully.")
     }

@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.trainingproject.habittrackerapp.presentation.navigation.Screen
 import com.trainingproject.habittrackerapp.presentation.util.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,6 +48,13 @@ fun AuthScreen(
         val event = state.event ?: return@LaunchedEffect
 
         when (event) {
+            is UiEvent.Navigate -> {
+                navController.navigate(event.route){
+                    popUpTo(Screen.AuthScreen.route) {
+                        inclusive = true
+                    }
+                }
+            }
             is UiEvent.PopBackStack -> navController.popBackStack()
             is UiEvent.ShowSnackbar -> {
                 snackbarHostState.showSnackbar(
@@ -54,7 +62,6 @@ fun AuthScreen(
                     actionLabel = event.action
                 )
             }
-            else -> Unit
         }
         viewModel.onEventConsumed()
     }

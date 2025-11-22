@@ -52,7 +52,13 @@ fun AddHabitScreen(
 
         when (event) {
             is UiEvent.Navigate -> {
-                navController.navigate(event.route)
+                navController.navigate(event.route) {
+                    if (event.route == Screen.AuthScreen.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                    }
+                }
             }
 
             is UiEvent.ShowSnackbar -> {

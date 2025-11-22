@@ -1,6 +1,6 @@
 package com.trainingproject.habittrackerapp.presentation.navigation
 
-import HabitDetailScreen
+import com.trainingproject.habittrackerapp.presentation.habitdetail.HabitDetailScreen
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable

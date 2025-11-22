@@ -1,3 +1,5 @@
+package com.trainingproject.habittrackerapp.presentation.habitdetail
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.trainingproject.habittrackerapp.domain.models.Habit
-import com.trainingproject.habittrackerapp.presentation.habitdetail.HabitDetailViewModel
+import com.trainingproject.habittrackerapp.presentation.navigation.Screen
 import com.trainingproject.habittrackerapp.presentation.util.UiEvent
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,6 +59,15 @@ fun HabitDetailScreen(
         val event = state.event ?: return@LaunchedEffect
 
         when (event) {
+            is UiEvent.Navigate -> {
+                navController.navigate(event.route) {
+                    if (event.route == Screen.AuthScreen.route) {
+                        popUpTo(navController.graph.id) {
+                            inclusive = true
+                        }
+                    }
+                }
+            }
             is UiEvent.PopBackStack -> navController.popBackStack()
             is UiEvent.ShowSnackbar -> {
                 snackbarHostState.showSnackbar(
@@ -64,7 +75,6 @@ fun HabitDetailScreen(
                     actionLabel = event.action
                 )
             }
-            else -> Unit
         }
         viewModel.onEventConsumed()
     }
